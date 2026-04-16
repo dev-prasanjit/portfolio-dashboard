@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Tradetron Portfolio Dashboard — Live strategy performance tracking powered by Google Sheets">
+    <title>Tradetron Portfolio Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Animated Background -->
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header" id="header">
+            <div class="header-left">
+                <h1 class="logo">
+                    <span class="logo-icon">◈</span>
+                    Tradetron Dashboard
+                </h1>
+                <span class="header-subtitle">Live Performance Tracker</span>
+            </div>
+            <div class="header-right">
+                <div class="header-controls">
+                    <div class="month-selector">
+                        <label for="monthSelect">Month</label>
+                        <select id="monthSelect"></select>
+                    </div>
+                    <div class="refresh-info">
+                        <span class="last-updated" id="lastUpdated">—</span>
+                        <button class="btn-refresh" id="btnRefresh" title="Refresh Data">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10" />
+                                <polyline points="1 20 1 14 7 14" />
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="live-clock" id="liveClock"></div>
+            </div>
+        </header>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loader-content">
+                <div class="spinner"></div>
+                <p>Fetching data from Google Sheets…</p>
+            </div>
+        </div>
+
+        <!-- Error Banner -->
+        <div class="error-banner" id="errorBanner" style="display:none;">
+            <span id="errorMessage"></span>
+            <button class="btn-dismiss" id="btnDismissError">✕</button>
+        </div>
+
+        <!-- Portfolio Summary Cards -->
+        <section class="summary-cards" id="summaryCards">
+            <div class="card" id="cardTodayPnl">
+                <div class="card-header">
+                    <span class="card-icon">📊</span>
+                    <span class="card-label">Today's P&L</span>
+                </div>
+                <div class="card-value" id="todayPnl">—</div>
+                <div class="card-sub" id="todayPnlSub"></div>
+            </div>
+            <div class="card" id="cardMonthlyPnl">
+                <div class="card-header">
+                    <span class="card-icon">📅</span>
+                    <span class="card-label">Monthly P&L</span>
+                </div>
+                <div class="card-value" id="monthlyPnl">—</div>
+                <div class="card-sub" id="monthlyPnlSub"></div>
+            </div>
+            <div class="card" id="cardYearlyPnl">
+                <div class="card-header">
+                    <span class="card-icon">📈</span>
+                    <span class="card-label">Yearly P&L</span>
+                </div>
+                <div class="card-value" id="yearlyPnl">—</div>
+                <div class="card-sub" id="yearlyPnlSub"></div>
+            </div>
+            <div class="card" id="cardCapital">
+                <div class="card-header">
+                    <span class="card-icon">💰</span>
+                    <span class="card-label">Capital Deployed</span>
+                </div>
+                <div class="card-value" id="capitalDeployed">—</div>
+                <div class="card-sub" id="capitalSub"></div>
+            </div>
+            <div class="card" id="cardDrawdown">
+                <div class="card-header">
+                    <span class="card-icon">📉</span>
+                    <span class="card-label">Current Drawdown</span>
+                </div>
+                <div class="card-value" id="currentDD">—</div>
+                <div class="card-sub" id="ddSub"></div>
+            </div>
+        </section>
+
+        <!-- Overall Stats Row -->
+        <section class="stats-row" id="statsRow">
+            <div class="stat-chip">
+                <span class="stat-label">Win Days</span>
+                <span class="stat-value" id="winDays">—</span>
+            </div>
+            <div class="stat-chip">
+                <span class="stat-label">Loss Days</span>
+                <span class="stat-value" id="lossDays">—</span>
+            </div>
+            <div class="stat-chip">
+                <span class="stat-label">Win Ratio</span>
+                <span class="stat-value" id="winRatio">—</span>
+            </div>
+            <div class="stat-chip">
+                <span class="stat-label">Max DD</span>
+                <span class="stat-value" id="maxDD">—</span>
+            </div>
+            <div class="stat-chip">
+                <span class="stat-label">ROI</span>
+                <span class="stat-value" id="roi">—</span>
+            </div>
+            <div class="stat-chip">
+                <span class="stat-label">Current Equity</span>
+                <span class="stat-value" id="currentEquity">—</span>
+            </div>
+        </section>
+
+        <!-- Day-wise PNL -->
+        <section class="daywise-section" id="daywiseSection">
+            <h2 class="section-title">Daywise P&L</h2>
+            <div class="daywise-grid" id="daywiseGrid"></div>
+        </section>
+
+        <!-- Strategy Daily PNL Table -->
+        <section class="table-section" id="tableSection">
+            <div class="table-header-bar">
+                <h2 class="section-title">Strategy Daily P&L — <span id="selectedMonthName">Current Month</span></h2>
+                <div class="table-actions">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search strategies…">
+                    <button class="btn-export" id="btnExport" title="Export CSV">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Export
+                    </button>
+                </div>
+            </div>
+            <div class="table-container" id="tableContainer">
+                <table id="strategyTable">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Monthly P&L Heatmap -->
+        <section class="heatmap-section" id="heatmapSection">
+            <h2 class="section-title">Monthly P&L Summary</h2>
+            <div class="heatmap-grid" id="heatmapGrid"></div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Data source: <a
+                    href="https://docs.google.com/spreadsheets/d/1lEHKRDuOk2v9WCWRv4iuz7ib_FLdkYQRurmrGBO3e3I"
+                    target="_blank" rel="noopener">Google Sheet ↗</a>
+                &nbsp;|&nbsp; Auto-refreshes every 60 minutes</p>
+        </footer>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
