@@ -895,9 +895,11 @@ function renderCalendarHeatmap() {
         // Determine color class
         let colorClass = 'neutral';
         if (hasData) {
-            if (pnl > 50000) colorClass = 'profit-2';
+            if (pnl > 50000) colorClass = 'profit-3';
+            else if (pnl > 25000) colorClass = 'profit-2';
             else if (pnl > 0) colorClass = 'profit-1';
-            else if (pnl < -50000) colorClass = 'loss-2';
+            else if (pnl < -50000) colorClass = 'loss-3';
+            else if (pnl < -25000) colorClass = 'loss-2';
             else if (pnl < 0) colorClass = 'loss-1';
             else colorClass = 'neutral'; // strictly 0 is grey
         }
