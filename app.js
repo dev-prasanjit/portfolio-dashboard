@@ -22,6 +22,7 @@ let sortCol = null;
 let sortDir = 'desc';
 let autoRefreshTimer = null;
 let searchQuery = '';
+let charts = { bar: null, stratBar: null };
 
 // ===== DOM References =====
 const $ = id => document.getElementById(id);
@@ -213,6 +214,7 @@ function renderAll() {
     renderSummaryCards();
     renderStatsRow();
     renderDaywise();
+    renderAnalytics();
     renderTable();
     renderHeatmap();
     $('selectedMonthName').textContent = `${selectedMonth}-26`;
@@ -719,4 +721,205 @@ function showToast(message, type = 'info') {
         toast.style.transition = '0.3s ease-in';
         setTimeout(() => toast.remove(), 300);
     }, 3000);
+}
+
+// ===== Analytics =====
+function renderAnalytics() {
+    $('barChartMonth').textContent = `${selectedMonth}-26`;
+    $('stratChartMonth').textContent = `${selectedMonth}-26`;
+
+    const monthRows = dailyPnlData.filter(r => r[3] === selectedMonth);
+    const activeStrategies = getActiveStrategiesForMonth(selectedMonth);
+
+    // 1. Daily P&L Bar Chart
+    const dailyLabels = [];
+    const dailyData = [];
+    const dailyColors = [];
+
+    monthRows.forEach(row => {
+        const pnl = parseNum(row[4]);
+        // Only include days with actual activity
+        if (pnl !== 0 || Object.values(activeStrategies).some(s => parseNum(row[s.colIdx]) !== 0)) {
+            dailyLabels.push(row[0] || 'Unknown');
+            dailyData.push(pnl);
+            dailyColors.push(pnl >= 0 ? '#10b981' : '#ef4444');
+        }
+    });
+
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                titleFont: { family: 'Inter', size: 13 },
+                bodyFont: { family: 'Inter', size: 14, weight: 'bold' },
+                padding: 12,
+                cornerRadius: 8,
+                callbacks: {
+                    label: function(context) { return formatINR(context.raw); }
+                }
+            }
+        },
+        scales: {
+            x: { grid: { color: 'rgba(100,116,139,0.1)' }, ticks: { color: '#94a3b8', font: { family: 'Inter' } } },
+            y: { grid: { color: 'rgba(100,116,139,0.1)' }, ticks: { color: '#94a3b8', font: { family: 'Inter' } } }
+        }
+    };
+
+    if (charts.bar) { charts.bar.destroy(); }
+    charts.bar = new Chart($('dailyBarChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: dailyLabels,
+            datasets: [{ data: dailyData, backgroundColor: dailyColors, borderRadius: 4 }]
+        },
+        options: commonOptions
+    });
+
+    // 2. Strategy Contribution Bar
+    const stratLabels = [];
+    const stratData = [];
+    const stratColors = [];
+
+    activeStrategies.forEach(strat => {
+        let stratTotal = 0;
+        monthRows.forEach(row => { stratTotal += parseNum(row[strat.colIdx]); });
+        stratLabels.push(strat.name);
+        stratData.push(stratTotal);
+        stratColors.push(stratTotal >= 0 ? '#6366f1' : '#f43f5e'); // accent / rose
+    });
+
+    if (charts.stratBar) { charts.stratBar.destroy(); }
+    charts.stratBar = new Chart($('strategyBarChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: stratLabels,
+            datasets: [{ data: stratData, backgroundColor: stratColors, borderRadius: 4 }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                    titleFont: { family: 'Inter', size: 13 },
+                    bodyFont: { family: 'Inter', size: 14, weight: 'bold' },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) { return formatINR(context.raw); }
+                    }
+                }
+            },
+            scales: {
+                x: { 
+                    grid: { color: 'rgba(100,116,139,0.1)' }, 
+                    ticks: { color: '#94a3b8', font: { family: 'Inter' } },
+                    beginAtZero: true
+                },
+                y: { 
+                    grid: { color: 'rgba(100,116,139,0.1)' }, 
+                    ticks: { color: '#94a3b8', font: { family: 'Inter' } }
+                }
+            }
+        }
+    });
+
+    // 3. Calendar Heatmap
+    renderCalendarHeatmap();
+}
+
+function renderCalendarHeatmap() {
+    const calendar = $('calendarHeatmap');
+    calendar.innerHTML = '';
+
+    // Process all data for dictionary { 'DD-MMM-YY': pnl }
+    const pnlDict = {};
+    dailyPnlData.forEach(r => {
+        const dateStr = r[0]; // e.g. "1-Jan-26"
+        const pnl = parseNum(r[4]);
+        // Format to comparable standard
+        if (dateStr) pnlDict[dateStr.trim()] = pnl;
+    });
+
+    // Generate dates for 2026
+    const startDate = new Date(2026, 0, 1);
+    const endDate = new Date(2026, 11, 31);
+    
+    // Day of week offset so it aligns like a real calendar (Jan 1 2026 is a Thursday = index 4)
+    const firstDayOffset = startDate.getDay();
+    
+    // Add month labels
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Inject Y-axis labels fixed to column 1
+    let currentHtml = `
+        <div class="cal-label-y" style="grid-column: 1; grid-row: 3;">Mon</div>
+        <div class="cal-label-y" style="grid-column: 1; grid-row: 5;">Wed</div>
+        <div class="cal-label-y" style="grid-column: 1; grid-row: 7;">Fri</div>
+    `;
+    
+    // Create empty cells for offset in column 2
+    for (let i = 0; i < firstDayOffset; i++) {
+        currentHtml += '<div style="grid-column: 2; grid-row: ' + (i + 2) + '; width: 100%;"></div>'; // +2 because row 1 is for month label
+    }
+
+    let currentCol = 2; // start from col 2 for the heatmap squares
+    let currentRow = firstDayOffset + 2;
+    let currentMonth = -1;
+
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const month = d.getMonth();
+        // Set month label if first time seeing this month (approximately above the column)
+        if (month !== currentMonth && d.getDate() <= 7) {
+            currentHtml += `<div class="cal-month-label" style="grid-column: ${currentCol};">${months[month]}</div>`;
+            currentMonth = month;
+        }
+
+        // Format exactly how it looks in Sheet: "1-Jan-26"
+        const dStr = d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }).replace(' ', '-') + '-26';
+        let pnl = 0;
+        let hasData = false;
+
+        // Try exact match or padded match
+        if (pnlDict[dStr] !== undefined) { pnl = pnlDict[dStr]; hasData = true; }
+        else {
+            const paddedDstr = d.toLocaleDateString('en-GB', { day:'2-digit', month:'short' }).replace(' ', '-') + '-26';
+            if (pnlDict[paddedDstr] !== undefined) { pnl = pnlDict[paddedDstr]; hasData = true; }
+        }
+
+        // Determine color class
+        let colorClass = 'neutral';
+        if (hasData) {
+            if (pnl > 50000) colorClass = 'profit-2';
+            else if (pnl > 0) colorClass = 'profit-1';
+            else if (pnl < -50000) colorClass = 'loss-2';
+            else if (pnl < 0) colorClass = 'loss-1';
+            else colorClass = 'neutral'; // strictly 0 is grey
+        }
+
+        const dateDisplay = d.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        const pnlDisplay = hasData ? formatINR(pnl) : 'No data';
+
+        currentHtml += `
+            <div class="cal-day ${colorClass}" style="grid-column: ${currentCol}; grid-row: ${currentRow};">
+                <div class="cal-tooltip">
+                    <strong>${dateDisplay}</strong><br/>
+                    ${pnlDisplay}
+                </div>
+            </div>
+        `;
+
+        currentRow++;
+        if (currentRow > 8) {
+            currentRow = 2; // reset to Monday row
+            currentCol++;
+        }
+    }
+
+    calendar.innerHTML = currentHtml;
 }

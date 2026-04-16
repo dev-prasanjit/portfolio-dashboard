@@ -373,6 +373,141 @@ tr.total-row td { border-top: 2px solid var(--border-glow); font-size: 0.88rem; 
 .toast.error { border-left: 3px solid var(--red); }
 .toast.info { border-left: 3px solid var(--accent-primary); }
 @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+/* ===== Analytics Section (Chart.js & Heatmap) ===== */
+.analytics-section {
+    margin-bottom: 24px;
+}
+.analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.chart-card, .heatmap-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 24px;
+}
+.chart-title {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+.chart-container {
+    position: relative;
+    height: 280px;
+    width: 100%;
+}
+
+/* Calendar Heatmap (Win/Loss) */
+.heatmap-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.heatmap-header .chart-title {
+    margin-bottom: 0;
+}
+.heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.color-scale {
+    display: flex;
+    gap: 4px;
+}
+.scale-box {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+.scale-loss-2 { background: #7f1d1d; } /* dark red */
+.scale-loss-1 { background: #ef4444; } /* red */
+.scale-neutral { background: rgba(100,116,139,0.15); } /* gray */
+.scale-profit-1 { background: #10b981; } /* green */
+.scale-profit-2 { background: #065f46; } /* dark green */
+
+.calendar-wrapper {
+    width: 100%;
+}
+.calendar-heatmap {
+    /* 1 col for labels, 54 columns max */
+    display: grid;
+    grid-template-columns: 24px repeat(53, minmax(0, 1fr));
+    grid-template-rows: 20px repeat(7, auto);
+    gap: 4px;
+    width: 100%;
+}
+.cal-label-y {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    justify-self: end;
+    align-self: center;
+    padding-right: 4px;
+}
+.cal-month-label {
+    grid-row: 1;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 4px;
+}
+.cal-day {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    border-radius: 3px;
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+}
+.cal-day:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 8px rgba(0,0,0,0.5);
+    z-index: 10;
+}
+/* Map colors */
+.cal-day.loss-2 { background: #7f1d1d; }
+.cal-day.loss-1 { background: #ef4444; }
+.cal-day.neutral { background: rgba(100,116,139,0.15); border: 1px solid rgba(255,255,255,0.05); }
+.cal-day.profit-1 { background: #10b981; }
+.cal-day.profit-2 { background: #065f46; }
+
+/* Custom tooltip for heatmap */
+.cal-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--border-glow);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    color: #fff;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 20;
+    opacity: 0;
+    transition: opacity 0.2s;
+    box-shadow: var(--shadow-md);
+}
+.cal-day:hover .cal-tooltip {
+    opacity: 1;
+}
 
 /* ===== Responsive ===== */
 @media (max-width: 1200px) {

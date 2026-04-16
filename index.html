@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -168,6 +169,43 @@
                     <thead id="tableHead"></thead>
                     <tbody id="tableBody"></tbody>
                 </table>
+            </div>
+        </section>
+        <!-- Advanced Analytics -->
+        <section class="analytics-section" id="analyticsSection">
+            <h2 class="section-title">Performance Analytics</h2>
+            <div class="analytics-grid">
+                <div class="chart-card">
+                    <h3 class="chart-title">Daily P&L Bar &mdash; <span id="barChartMonth">Current Month</span></h3>
+                    <div class="chart-container">
+                        <canvas id="dailyBarChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3 class="chart-title">Strategy Contribution &mdash; <span id="stratChartMonth">Current Month</span></h3>
+                    <div class="chart-container">
+                        <canvas id="strategyBarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="heatmap-card">
+                <div class="heatmap-header">
+                    <h3 class="chart-title">Trading Activity &mdash; 2026 Win/Loss Heatmap</h3>
+                    <div class="heatmap-legend">
+                        <span>Less</span>
+                        <div class="color-scale">
+                            <div class="scale-box scale-loss-2"></div>
+                            <div class="scale-box scale-loss-1"></div>
+                            <div class="scale-box scale-neutral"></div>
+                            <div class="scale-box scale-profit-1"></div>
+                            <div class="scale-box scale-profit-2"></div>
+                        </div>
+                        <span>More</span>
+                    </div>
+                <div class="calendar-wrapper">
+                    <div class="calendar-heatmap" id="calendarHeatmap"></div>
+                </div>
             </div>
         </section>
 
